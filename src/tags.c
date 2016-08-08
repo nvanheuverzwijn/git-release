@@ -100,10 +100,13 @@ static int git_release_tag_increment_version_number(const char* tag, int version
 	if(version_label == MAJOR)
 	{
 		major++;
+		minor = 0;
+		patch = 0;
 	}
 	else if(version_label == MINOR)
 	{
 		minor++;
+		patch = 0;
 	}
 	else if(version_label == PATCH)
 	{
