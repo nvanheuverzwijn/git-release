@@ -1,6 +1,7 @@
 #include <git2.h>
 #include <regex.h>
 #include <string.h>
+#include <stdio.h>
 #include "tags.h"
 #include "memory.h"
 
@@ -78,6 +79,45 @@ static int git_release_tag_get_version_number(const char* tag, int version_label
 	
 	return 0;
 }
+static int git_release_tag_increment_version_number(const char* tag, int version_label, char** out)
+{
+	int err;
+	int major;
+	int minor;
+	int patch;
+	if((err = git_release_tag_get_major(tag, &major)))
+	{
+		return err;
+	}
+	if((err = git_release_tag_get_minor(tag, &minor)))
+	{
+		return err;
+	}
+	if((err = git_release_tag_get_patch(tag, &patch)))
+	{
+		return err;
+	}
+	if(version_label == MAJOR)
+	{
+		major++;
+	}
+	else if(version_label == MINOR)
+	{
+		minor++;
+	}
+	else if(version_label == PATCH)
+	{
+		patch++;
+	}
+	*out = xmalloc(12 * sizeof(char));
+	int len = snprintf(*out, 12, "v%d.%d.%d", major, minor, patch);
+	if(len >= 12)
+	{
+		*out = xmalloc((len + 1) * sizeof(char));
+		snprintf(*out, len + 1, "v%d.%d.%d", major, minor, patch);
+	}
+	return 0;
+}
 
 //
 // Header function below
@@ -101,16 +141,25 @@ int git_release_tag_get_last(git_repository *repo, char** out)
 
 int git_release_tag_get_major(const char* tag, int* out)
 {
-	int err = git_release_tag_get_version_number(tag, MAJOR, out);
-	return err;
+	return git_release_tag_get_version_number(tag, MAJOR, out);
 }
 int git_release_tag_get_minor(const char* tag, int* out)
 {
-	int err = git_release_tag_get_version_number(tag, MINOR, out);
-	return err;
+	return git_release_tag_get_version_number(tag, MINOR, out);
 }
 int git_release_tag_get_patch(const char* tag, int* patch)
 {
-	int err = git_release_tag_get_version_number(tag, PATCH, patch);
-	return err;
+	return git_release_tag_get_version_number(tag, PATCH, patch);
+}
+int git_release_tag_increment_major(const char* tag, char** out)
+{
+	return git_release_tag_increment_version_number(tag, MAJOR, out);
+}
+int git_release_tag_increment_minor(const char* tag, char** out)
+{
+	return git_release_tag_increment_version_number(tag, MINOR, out);
+}
+int git_release_tag_increment_patch(const char* tag, char** out)
+{
+	return git_release_tag_increment_version_number(tag, PATCH, out);
 }

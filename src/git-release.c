@@ -43,5 +43,15 @@ int main(int argc, char *argv[])
 	}
 	printf("%d\n", patch);
 
+	char* new_tag = NULL;
+	git_release_tag_increment_major(tag, &new_tag);
+	printf("%s\n", new_tag);
+
+	git_release_tag_increment_minor(tag, &new_tag);
+	printf("%s\n", new_tag);
+
+	git_release_tag_increment_patch(tag, &new_tag);
+	printf("%s\n", new_tag);
+
 	return 0;
 }
