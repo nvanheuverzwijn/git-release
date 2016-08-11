@@ -27,7 +27,7 @@ clean:
 	rm -f bin/*
 
 clean-lib:
-	rm -rf lib/semver-utils/build lib/libgit2/build
+	rm -rf lib/semver-utils/out lib/libgit2/build
 
 help:
 	@echo "help below"
@@ -37,20 +37,23 @@ help:
 #
 
 lib/libgit2/build/:
-	-mkdir lib/libgit2/build
+	git submodule update --init --recursive
+	mkdir -p lib/libgit2/build
 	cd lib/libgit2/build && cmake .. && cmake --build .
-lib/semver-utils/build/:
-	-mkdir lib/semver-utils/build
-	cd lib/semver-utils && ./autogen.sh && ./configure --prefix $(abspath ./lib/semver-utils/build) && make && make install
-	rm config.log
+lib/semver-utils/out/:
+	git submodule update --init --recursive
+	mkdir -p lib/semver-utils/out
+	cd lib/semver-utils && ./autogen.sh && ./configure --prefix $(abspath ./lib/semver-utils/out) && make && make install
+	rm -f config.log lib/semver-utils/libsemver_config.h.in~
 
 %.o: %.c
 	$(CC) -c $^ -o $@ $(CFLAGS) $(INCLUDES)
 
-bin/git-release: $(OBJ) | lib/libgit2/build/ lib/semver-utils/build/
-	$(CC) -o $@ $^ $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBRARIES)
+bin/git-release: lib/libgit2/build/ lib/semver-utils/out/ $(OBJ) 
+	mkdir -p bin
+	$(CC) -o $@ $(OBJ) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBRARIES)
 	chmod +x bin/git-release
 	@echo
-	@echo "Now run 'export LD_LIBRARY_PATH=$(abspath ./lib/libgit2/build/):$(abspath ./lib/semver-util/build)'"
+	@echo "Now run 'export LD_LIBRARY_PATH=$(abspath ./lib/libgit2/build/):$(abspath ./lib/semver-util/out)'"
 
-.PHONY: all clean help clean-lib
+.PHONY: all clean help clean-lib submodule
