@@ -1,3 +1,6 @@
 [submodule "lib/libgit2"]
 	path = lib/libgit2
 	url = git@github.com:libgit2/libgit2.git
+[submodule "lib/semver-utils"]
+	path = lib/semver-utils
+	url = git@github.com:emcrisostomo/semver-utils.git
