@@ -1,12 +1,6 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include "memory.h"
-
-void die(const char* message)
-{
-	fprintf(stderr, message);
-	exit(1);
-}
+#include "errors.h"
 
 void *xmalloc(size_t size)
 {

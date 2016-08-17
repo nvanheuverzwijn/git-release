@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "semvers.h"
 #include "memory.h"
+#include "errors.h"
 
 const char* git_release_semvers_regex_pattern = "v([0-9])+\\.([0-9])+\\.([0-9])+(.*)";
 const int major_position = 1;
@@ -33,7 +34,7 @@ static int git_release_semvers_regex_match(const char* value, regmatch_t** out)
 	int match = regexec(regex, value, nmatch, pmatch, 0);
 	if(match == REG_NOMATCH)
 	{
-		return ENOMATCH;
+		return E_SEMVERSNOMATCH;
 	}
 	else if(match)
 	{

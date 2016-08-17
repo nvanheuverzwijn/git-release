@@ -1,10 +1,6 @@
 #include <git2.h>
 #include "tags.h"
-
-
-//
-// Header function below
-//
+#include "errors.h"
 
 int git_release_tag_get_last(git_repository *repo, char** out)
 {
@@ -15,7 +11,7 @@ int git_release_tag_get_last(git_repository *repo, char** out)
 	}
 	if(tags.count == 0)
 	{
-		return ETAGNOTFOUND;
+		return E_TAGNOTFOUND;
 	}
 	*out = tags.strings[tags.count - 1];
 	return 0;

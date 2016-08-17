@@ -5,6 +5,7 @@
 #include "tags.h"
 #include "semvers.h"
 #include "memory.h"
+#include "branch.h"
 
 int main(int argc, char *argv[])
 {
@@ -53,6 +54,15 @@ int main(int argc, char *argv[])
 
 	git_release_semvers_increment_patch(tag, &new_tag);
 	printf("%s\n", new_tag);
+
+	if(git_release_branch_exist(repo, "origin/release/v2.10.0"))
+	{
+		printf("branch does not exist");
+	}
+	else
+	{
+		printf("branch exist");
+	}
 
 	return 0;
 }

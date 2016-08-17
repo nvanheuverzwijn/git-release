@@ -2,9 +2,6 @@
 #define SEMVERS_H
 #include <regex.h>
 
-#define ETAGNOTFOUND 1 // No tag could be found
-#define ENOMATCH 2 // Regex could not match
-
 enum VERSION_LABEL
 {
 	MAJOR, MINOR, PATCH
