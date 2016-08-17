@@ -3,6 +3,7 @@
 #include <string.h>
 #include <git2.h>
 #include "tags.h"
+#include "semvers.h"
 #include "memory.h"
 
 int main(int argc, char *argv[])
@@ -23,34 +24,34 @@ int main(int argc, char *argv[])
 	printf("%s\n", tag);
 
 	int major;
-	if(git_release_tag_get_major(tag, &major))
+	if(git_release_semvers_get_major(tag, &major))
 	{
 		die("Could not get major number of tag");
 	}
 	printf("%d\n", major);
 
 	int minor;
-	if(git_release_tag_get_minor(tag, &minor))
+	if(git_release_semvers_get_minor(tag, &minor))
 	{
 		die("Could not get minor number of tag");
 	}
 	printf("%d\n", minor);
 
 	int patch;
-	if(git_release_tag_get_patch(tag, &patch))
+	if(git_release_semvers_get_patch(tag, &patch))
 	{
 		die("Could not get patch number of tag");
 	}
 	printf("%d\n", patch);
 
 	char* new_tag = NULL;
-	git_release_tag_increment_major(tag, &new_tag);
+	git_release_semvers_increment_major(tag, &new_tag);
 	printf("%s\n", new_tag);
 
-	git_release_tag_increment_minor(tag, &new_tag);
+	git_release_semvers_increment_minor(tag, &new_tag);
 	printf("%s\n", new_tag);
 
-	git_release_tag_increment_patch(tag, &new_tag);
+	git_release_semvers_increment_patch(tag, &new_tag);
 	printf("%s\n", new_tag);
 
 	return 0;
