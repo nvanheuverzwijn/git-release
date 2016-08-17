@@ -12,7 +12,7 @@ LDFLAGS = -L./lib/libgit2/build/
 LIBRARIES = -lgit2
 
 ODIR = src
-_OBJ = git-release.o tags.o memory.o semvers.o
+_OBJ = git-release.o tags.o memory.o semvers.o branch.o errors.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
