@@ -6,6 +6,7 @@
 #include "semvers.h"
 #include "memory.h"
 #include "branch.h"
+#include "remote.h"
 
 int main(int argc, char *argv[])
 {
@@ -57,11 +58,21 @@ int main(int argc, char *argv[])
 
 	if(git_release_branch_exist(repo, "origin/release/v2.10.0"))
 	{
-		printf("branch does not exist");
+		printf("branch does not exist\n");
 	}
 	else
 	{
-		printf("branch exist");
+		printf("branch exist\n");
+	}
+
+	int ret = 0;
+	if((ret = git_release_remote_fetch(repo, "origin")))
+	{
+		printf("could not fetch: %i\n", ret);
+	}
+	else
+	{
+		printf("fetch success\n");
 	}
 
 	return 0;
