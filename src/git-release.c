@@ -8,9 +8,75 @@
 #include "branch.h"
 #include "remote.h"
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+
+
+static int progress_cb(const char *str, int len, void *data)
+{
+	(void)data;
+	printf("remote: %.*s", len, str);
+	fflush(stdout); /* We don't have the \n to force the flush */
+	return 0;
+}
+
+static int update_cb(const char *refname, const git_oid *a, const git_oid *b, void *data)
+{
+	char a_str[GIT_OID_HEXSZ+1], b_str[GIT_OID_HEXSZ+1];
+	(void)data;
+
+	git_oid_fmt(b_str, b);
+	b_str[GIT_OID_HEXSZ] = '\0';
+
+	if (git_oid_iszero(a)) {
+		printf("[new]		 %.20s %s\n", b_str, refname);
+	}
+	else
+	{
+		git_oid_fmt(a_str, a);
+		a_str[GIT_OID_HEXSZ] = '\0';
+		printf("[updated] %.10s..%.10s %s\n", a_str, b_str, refname);
+	}
+
+	return 0;
+}
+
+static int transfer_progress_cb(const git_transfer_progress *stats, void *payload)
+{
+	if (stats->received_objects == stats->total_objects) {
+		printf("Resolving deltas %d/%d\r",
+		       stats->indexed_deltas, stats->total_deltas
+		);
+	} else if (stats->total_objects > 0) {
+		printf("Received %d/%d objects (%d) in %zu bytes\r",
+		       stats->received_objects, stats->total_objects,
+		       stats->indexed_objects, stats->received_bytes
+		);
+	}
+	return 0;
+}
+
+static int cred_acquire_cb(git_cred **out,
+		const char* UNUSED(url),
+		const char* username_from_url,
+		unsigned int UNUSED(allowed_types),
+		void * UNUSED(payload))
+{
+	return git_cred_ssh_key_from_agent(out, username_from_url);
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
-    git_libgit2_init();
+		git_libgit2_init();
 
 	char* tag = NULL;
 	git_repository *repo = NULL;
@@ -65,10 +131,15 @@ int main(int argc, char *argv[])
 		printf("branch exist\n");
 	}
 
+	git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+	fetch_opts.callbacks.update_tips = &update_cb;
+	fetch_opts.callbacks.sideband_progress = &progress_cb;
+	fetch_opts.callbacks.transfer_progress = transfer_progress_cb;
+	fetch_opts.callbacks.credentials = cred_acquire_cb;
 	int ret = 0;
-	if((ret = git_release_remote_fetch(repo, "origin")))
+	if((ret = git_release_remote_fetch(repo, "origin", &fetch_opts)))
 	{
-		printf("could not fetch: %i\n", ret);
+		printf("Could not authenticate against the server. Make sure ssh-agent is running with your key");
 	}
 	else
 	{

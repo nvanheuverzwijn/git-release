@@ -1,20 +1,17 @@
 #include <git2.h>
 #include "remote.h"
 #include "errors.h"
-#include <stdio.h>
 
-int git_release_remote_fetch(git_repository* repo, const char* name)
+int git_release_remote_fetch(git_repository* repo, const char* name, git_fetch_options* fetch_options)
 {
-	int return_code;
+	int return_code = 0;
 	git_remote* remote_reference = NULL;
 	if(git_remote_lookup(&remote_reference, repo, name))
 	{
 		return_code = E_REMOTENOTFOUND;
 	}
-	int ret = 0;
-	if((ret = git_remote_fetch(remote_reference, NULL, NULL, NULL)))
+	if(git_remote_fetch(remote_reference, NULL, fetch_options, NULL))
 	{
-		printf("\n%i\n", ret);
 		return_code = E_REMOTENOTFETCH;
 	}
 	git_remote_free(remote_reference);
