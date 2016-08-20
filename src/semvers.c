@@ -117,7 +117,7 @@ static int git_release_semvers_increment_version_number(const char* tag, int ver
 	int len = snprintf(*out, 12, "v%d.%d.%d", major, minor, patch);
 	if(len >= 12)
 	{
-		*out = xmalloc((len + 1) * sizeof(char));
+		*out = xrealloc(*out, (len +1) * sizeof(char));
 		snprintf(*out, len + 1, "v%d.%d.%d", major, minor, patch);
 	}
 	return 0;

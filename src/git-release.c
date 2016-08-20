@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <git2.h>
+#include "errors.h"
 #include "tags.h"
 #include "semvers.h"
 #include "memory.h"
