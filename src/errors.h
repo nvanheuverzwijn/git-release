@@ -6,6 +6,7 @@
 #define E_BRANCHNOTFOUND 3 /* Branch could not be found */
 #define E_REMOTENOTFOUND 4 /* Remote (origin, upstream, etc) could not be found */
 #define E_REMOTENOTFETCH 5 /* Remote (origin, upstream, etc) could not be fetched */
+#define E_SSHHOMENOTFOUND 6 /* Could not find the home directory of the current user */
 
 void die(const char* message);
 

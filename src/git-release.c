@@ -8,6 +8,7 @@
 #include "memory.h"
 #include "branch.h"
 #include "remote.h"
+#include "ssh.h"
 
 #ifdef UNUSED
 #elif defined(__GNUC__)
@@ -146,6 +147,8 @@ int main(int argc, char *argv[])
 	{
 		printf("fetch success\n");
 	}
+	git_strarray* out = NULL;
+	git_release_ssh_list_file_in_home(&out);
 
 	return 0;
 }
