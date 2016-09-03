@@ -1,4 +1,3 @@
-#include <git2.h>
 #include <stdlib.h>
 #include <stdio.h>	
 #include <pwd.h>
@@ -32,7 +31,7 @@ static int git_release_ssh_get_home_directory(char** out)
 	return 0;
 }
 
-static int git_release_ssh_get_ssh_directory(char** out)
+static int git_release_ssh_get_ssh_from_home_directory(char** out)
 {
 	int out_len = 0;
 	int return_code = 0;
@@ -47,40 +46,41 @@ static int git_release_ssh_get_ssh_directory(char** out)
 	return return_code;
 }
 
-int git_release_ssh_list_file_in_home(git_strarray** out)
+int git_release_ssh_list_file_in_home(git_release_ssh_key_pair_array** out)
 {
-	git_strarray* arr = xmalloc(sizeof(git_strarray));
+	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(out));
 	DIR *dp = NULL;
 	struct dirent *ep = NULL;
 	char* ssh_directory = NULL;
 	int return_code = 0;
-	if((return_code = git_release_ssh_get_ssh_directory(&ssh_directory)))
+	if((return_code = git_release_ssh_get_ssh_from_home_directory(&ssh_directory)))
 	{
-		return return_code;
+		goto free_and_return;
 	}
 	dp = opendir(ssh_directory);
 	if(dp != NULL)
 	{
 		arr->count = 0;
-		arr->strings = NULL;
+		arr->pairs = NULL;
 		while((ep = readdir(dp)))
 		{
 			if(ep->d_type == DT_REG && git_release_string_utility_endswith(ep->d_name, ".pub"))
 			{
 				int directory_len = strlen(ssh_directory) + sizeof(char) + strlen(ep->d_name) + sizeof(char);
-				arr->strings = (char**)xrealloc((void*)arr->strings, sizeof(char**) * (arr->count + 1));
-				arr->strings[arr->count] = xmalloc(directory_len);
-				snprintf(arr->strings[arr->count], directory_len, "%s/%s", ssh_directory, ep->d_name);
+				arr->pairs = xrealloc(arr->pairs, sizeof(void*) * (arr->count + 1));
+				arr->pairs[arr->count].public_key_path = xmalloc(directory_len);
+				snprintf(arr->pairs[arr->count].public_key_path, directory_len, "%s/%s", ssh_directory, ep->d_name);
+
+				/* remove `.pub` from public key to get the associated private key*/
+				git_release_string_utility_substr(arr->pairs[arr->count].public_key_path, -4, &arr->pairs[arr->count].private_key_path);
+
 				arr->count += 1;
 			}
 		}
 		closedir(dp);
+		*out = arr;
 	}
-	*out = arr;
-	for(int i = 0; i < arr->count; i++)
-	{
-		printf("%s\n", arr->strings[i]);
-	}
+free_and_return:
 	free(ssh_directory);
 	return return_code;
 }

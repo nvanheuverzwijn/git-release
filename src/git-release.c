@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <git2.h>
 #include "errors.h"
 #include "tags.h"
@@ -55,7 +56,8 @@ static int transfer_progress_cb(const git_transfer_progress *stats, void *payloa
 		printf("Resolving deltas %d/%d\r",
 		       stats->indexed_deltas, stats->total_deltas
 		);
-	} else if (stats->total_objects > 0) {
+	}
+	else if (stats->total_objects > 0) {
 		printf("Received %d/%d objects (%d) in %zu bytes\r",
 		       stats->received_objects, stats->total_objects,
 		       stats->indexed_objects, stats->received_bytes
@@ -64,21 +66,36 @@ static int transfer_progress_cb(const git_transfer_progress *stats, void *payloa
 	return 0;
 }
 
-static int cred_acquire_cb(git_cred **out,
+static int cred_acquire_from_ssh_agent_cb(git_cred **out,
 		const char* UNUSED(url),
 		const char* username_from_url,
 		unsigned int UNUSED(allowed_types),
-		void * UNUSED(payload))
+		void* UNUSED(payload))
 {
 	return git_cred_ssh_key_from_agent(out, username_from_url);
 }
 
-
-
-
-int main(int argc, char *argv[])
+static int cred_acquire_from_ssh_key_cb(git_cred **out,
+		const char* UNUSED(url),
+		const char* username_from_url,
+		unsigned int UNUSED(allowed_types),
+		void* UNUSED(payload))
 {
-		git_libgit2_init();
+	char* passphrase = getpass("gimme your pass: ");
+	return git_cred_ssh_key_new(
+		out,
+		username_from_url,
+		"pub",
+		"priv",
+		passphrase
+	);
+}
+
+
+
+int main(int argc, char* argv[])
+{
+	git_libgit2_init();
 
 	char* tag = NULL;
 	git_repository *repo = NULL;
@@ -133,21 +150,26 @@ int main(int argc, char *argv[])
 		printf("branch exist\n");
 	}
 
+	/*
 	git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
 	fetch_opts.callbacks.update_tips = &update_cb;
 	fetch_opts.callbacks.sideband_progress = &progress_cb;
 	fetch_opts.callbacks.transfer_progress = transfer_progress_cb;
-	fetch_opts.callbacks.credentials = cred_acquire_cb;
-	int ret = 0;
-	if((ret = git_release_remote_fetch(repo, "origin", &fetch_opts)))
+	fetch_opts.callbacks.credentials = cred_acquire_from_ssh_agent_cb;
+	if(git_release_remote_fetch(repo, "origin", &fetch_opts))
 	{
-		printf("Could not authenticate against the server. Make sure ssh-agent is running with your key");
+		fetch_opts.callbacks.credentials = cred_acquire_from_ssh_key_cb;
+		if(git_release_remote_fetch(repo, "origin", &fetch_opts))
+		{
+			printf("Could not authenticate against the server. Make sure ssh-agent is running with your key");
+		}
 	}
 	else
 	{
 		printf("fetch success\n");
 	}
-	git_strarray* out = NULL;
+	*/
+	git_release_ssh_key_pair_array* out = NULL;
 	git_release_ssh_list_file_in_home(&out);
 
 	return 0;
