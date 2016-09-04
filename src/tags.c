@@ -18,9 +18,10 @@ int git_release_tag_get_last(git_repository *repo, char** out)
 		return E_TAGNOTFOUND;
 	}
 	last_tag = tags.strings[tags.count - 1];
+	size_t last_tag_memlen = strlen(last_tag) + sizeof(char);
 
-	*out = xmalloc(strlen(last_tag));
-	strncpy(*out, last_tag, strlen(last_tag));
+	*out = xmalloc(last_tag_memlen);
+	strncpy(*out, last_tag, last_tag_memlen);
 
 	git_strarray_free(&tags);
 
