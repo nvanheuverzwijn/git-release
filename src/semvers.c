@@ -54,6 +54,7 @@ static int git_release_semvers_extract_int_from_pmatch(const char* value, const 
 	strncpy(str, &value[start], size);
 	str[size] = '\0';
 	*out = strtol(str, NULL, 10);
+	free(str);
 	
 	return 0;
 }
@@ -77,7 +78,7 @@ static int git_release_semvers_get_version_number(const char* tag, int version_l
 	{
 		git_release_semvers_extract_int_from_pmatch(tag, &pmatch[patch_position], out);
 	}
-	
+	free(pmatch);	
 	return 0;
 }
 static int git_release_semvers_increment_version_number(const char* tag, int version_label, char** out)
