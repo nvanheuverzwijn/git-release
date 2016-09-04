@@ -46,9 +46,43 @@ static int git_release_ssh_get_ssh_from_home_directory(char** out)
 	return return_code;
 }
 
+static void git_release_ssh_free_ssh_key_pairs(git_release_ssh_key_pair** pairs, int count)
+{
+	if(pairs == NULL)
+	{
+		return;
+	}
+	for(int i = 0; i < count; i++)
+	{
+		git_release_ssh_free_ssh_key_pair(pairs[i]);
+	}
+}
+
+void git_release_ssh_free_ssh_key_pair_array(git_release_ssh_key_pair_array* arr)
+{
+	if(arr == NULL)
+	{
+		return;
+	}
+	git_release_ssh_free_ssh_key_pairs(arr->pairs, arr->count);
+	free(arr->pairs);
+	free(arr);
+}
+
+void git_release_ssh_free_ssh_key_pair(git_release_ssh_key_pair* pair)
+{
+	if(pair == NULL)
+	{
+		return;
+	}
+	free(pair->public_key_path);
+	free(pair->private_key_path);
+	free(pair);
+}
+
 int git_release_ssh_list_file_in_home(git_release_ssh_key_pair_array** out)
 {
-	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(out));
+	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(git_release_ssh_key_pair_array));
 	DIR *dp = NULL;
 	struct dirent *ep = NULL;
 	char* ssh_directory = NULL;
@@ -67,12 +101,14 @@ int git_release_ssh_list_file_in_home(git_release_ssh_key_pair_array** out)
 			if(ep->d_type == DT_REG && git_release_string_utility_endswith(ep->d_name, ".pub"))
 			{
 				int directory_len = strlen(ssh_directory) + sizeof(char) + strlen(ep->d_name) + sizeof(char);
-				arr->pairs = xrealloc(arr->pairs, sizeof(void*) * (arr->count + 1));
-				arr->pairs[arr->count].public_key_path = xmalloc(directory_len);
-				snprintf(arr->pairs[arr->count].public_key_path, directory_len, "%s/%s", ssh_directory, ep->d_name);
+
+				arr->pairs = xrealloc(arr->pairs, sizeof(arr->pairs) * (arr->count + 1));
+				arr->pairs[arr->count] = xmalloc(sizeof(git_release_ssh_key_pair));
+				arr->pairs[arr->count]->public_key_path = xmalloc(directory_len);
+				snprintf(arr->pairs[arr->count]->public_key_path, directory_len, "%s/%s", ssh_directory, ep->d_name);
 
 				/* remove `.pub` from public key to get the associated private key*/
-				git_release_string_utility_substr(arr->pairs[arr->count].public_key_path, -4, &arr->pairs[arr->count].private_key_path);
+				git_release_string_utility_substr(arr->pairs[arr->count]->public_key_path, -4, &arr->pairs[arr->count]->private_key_path);
 
 				arr->count += 1;
 			}
