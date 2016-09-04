@@ -27,7 +27,7 @@ int git_release_string_utility_substr(const char* source, int len, char** out)
 		return 1;
 	}
 	size_t out_len = source_len - abs(len);
-	*out = xmalloc(out_len);
+	*out = xmalloc(out_len +sizeof(char));
 	if(len > 0)
 	{
 		memcpy(*out, source + len, out_len);
