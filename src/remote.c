@@ -9,11 +9,14 @@ int git_release_remote_fetch(git_repository* repo, const char* name, git_fetch_o
 	if(git_remote_lookup(&remote_reference, repo, name))
 	{
 		return_code = E_REMOTENOTFOUND;
+		goto free_and_return;
 	}
 	if(git_remote_fetch(remote_reference, NULL, fetch_options, NULL))
 	{
 		return_code = E_REMOTENOTFETCH;
+		goto free_and_return;
 	}
+free_and_return:
 	git_remote_free(remote_reference);
 	return return_code;
 }
