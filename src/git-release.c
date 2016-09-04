@@ -81,12 +81,15 @@ static int cred_acquire_from_ssh_key_cb(git_cred **out,
 		unsigned int UNUSED(allowed_types),
 		void* UNUSED(payload))
 {
-	char* passphrase = getpass("gimme your pass: ");
+	git_release_ssh_key_pair_array* ssh_pairs = NULL;
+	git_release_ssh_list_file_in_home(&ssh_pairs);
+	printf("Enter passphrase for key '%s':", ssh_pairs->pairs[0]->private_key_path);
+	char* passphrase = getpass("");
 	return git_cred_ssh_key_new(
 		out,
 		username_from_url,
-		"pub",
-		"priv",
+		ssh_pairs->pairs[0]->public_key_path,
+		ssh_pairs->pairs[0]->private_key_path,
 		passphrase
 	);
 }
@@ -104,12 +107,12 @@ int main(int argc, char* argv[])
 	{
 		die("Current directory not a git directory");
 	}
+
 	if(git_release_tag_get_last(repo, &tag))
 	{
 		die("Could not get last tag");
 	}
 	printf("%s\n", tag);
-
 	int major;
 	if(git_release_semvers_get_major(tag, &major))
 	{
@@ -134,12 +137,15 @@ int main(int argc, char* argv[])
 	char* new_tag = NULL;
 	git_release_semvers_increment_major(tag, &new_tag);
 	printf("%s\n", new_tag);
+	free(new_tag);
 
 	git_release_semvers_increment_minor(tag, &new_tag);
 	printf("%s\n", new_tag);
+	free(new_tag);
 
 	git_release_semvers_increment_patch(tag, &new_tag);
 	printf("%s\n", new_tag);
+	free(new_tag);
 
 	if(git_release_branch_exist(repo, "origin/release/v2.10.0"))
 	{
@@ -150,7 +156,6 @@ int main(int argc, char* argv[])
 		printf("branch exist\n");
 	}
 
-	/*
 	git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
 	fetch_opts.callbacks.update_tips = &update_cb;
 	fetch_opts.callbacks.sideband_progress = &progress_cb;
@@ -161,16 +166,22 @@ int main(int argc, char* argv[])
 		fetch_opts.callbacks.credentials = cred_acquire_from_ssh_key_cb;
 		if(git_release_remote_fetch(repo, "origin", &fetch_opts))
 		{
-			printf("Could not authenticate against the server. Make sure ssh-agent is running with your key");
+			printf("Could not authenticate against the server. Make sure ssh-agent is running with your key\n");
 		}
 	}
 	else
 	{
 		printf("fetch success\n");
 	}
-	*/
-	git_release_ssh_key_pair_array* out = NULL;
-	git_release_ssh_list_file_in_home(&out);
+	git_release_ssh_key_pair_array* ssh_pairs = NULL;
+	git_release_ssh_list_file_in_home(&ssh_pairs);
+	for(int i = 0; i < ssh_pairs->count; i++)
+	{
+		printf("%s\n", ssh_pairs->pairs[i]->private_key_path);
+		printf("%s\n", ssh_pairs->pairs[i]->public_key_path);
+	}
+	git_release_ssh_free_ssh_key_pair_array(ssh_pairs);
+	free(tag);
 
 	return 0;
 }
