@@ -79,17 +79,24 @@ static int cred_acquire_from_ssh_key_cb(git_cred **out,
 		const char* UNUSED(url),
 		const char* username_from_url,
 		unsigned int UNUSED(allowed_types),
-		void* UNUSED(payload))
+		void* payload)
 {
-	git_release_ssh_key_pair_array* ssh_pairs = NULL;
-	git_release_ssh_list_file_in_home(&ssh_pairs);
-	printf("Enter passphrase for key '%s':", ssh_pairs->pairs[0]->private_key_path);
+	if(payload == NULL)
+	{
+		die("cred_acquire_from_ssh_key_cb requires a payload.");
+	}
+	git_release_ssh_key_pair* ssh_pair = (git_release_ssh_key_pair*)payload;
+	printf("Enter passphrase for key '%s' (empty if no passphrase):", ssh_pair->private_key_path);
 	char* passphrase = getpass("");
+	if(strcmp(passphrase, "") == 0)
+	{
+		passphrase = NULL;
+	}
 	return git_cred_ssh_key_new(
 		out,
 		username_from_url,
-		ssh_pairs->pairs[0]->public_key_path,
-		ssh_pairs->pairs[0]->private_key_path,
+		ssh_pair->public_key_path,
+		ssh_pair->private_key_path,
 		passphrase
 	);
 }
@@ -164,10 +171,25 @@ int main(int argc, char* argv[])
 	if(git_release_remote_fetch(repo, "origin", &fetch_opts))
 	{
 		fetch_opts.callbacks.credentials = cred_acquire_from_ssh_key_cb;
-		if(git_release_remote_fetch(repo, "origin", &fetch_opts))
+		git_release_ssh_key_pair_array* ssh_pairs = NULL;
+		git_release_ssh_list_file_in_home(&ssh_pairs);
+		if(ssh_pairs->count != 0)
 		{
-			printf("Could not authenticate against the server. Make sure ssh-agent is running with your key\n");
+			fetch_opts.callbacks.payload = ssh_pairs->pairs[0];
+			if(git_release_remote_fetch(repo, "origin", &fetch_opts))
+			{
+				printf("Could not authenticate against the server. Make sure ssh-agent is running with your key\n");
+			}
+			else
+			{
+				printf("fetch success\n");
+			}
 		}
+		else
+		{
+			printf("Cannot fetch: there is no ssh key in your home .ssh folder.");
+		}
+		git_release_ssh_free_ssh_key_pair_array(ssh_pairs);
 	}
 	else
 	{
