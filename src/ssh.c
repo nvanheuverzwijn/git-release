@@ -92,10 +92,10 @@ int git_release_ssh_list_file_in_home(git_release_ssh_key_pair_array** out)
 		goto free_and_return;
 	}
 	dp = opendir(ssh_directory);
+	arr->count = 0;
+	arr->pairs = NULL;
 	if(dp != NULL)
 	{
-		arr->count = 0;
-		arr->pairs = NULL;
 		while((ep = readdir(dp)))
 		{
 			if(ep->d_type == DT_REG && git_release_string_utility_endswith(ep->d_name, ".pub"))
