@@ -71,6 +71,7 @@ void git_release_ssh_free_ssh_key_pairs(git_release_ssh_key_pair** pairs, int co
 	{
 		git_release_ssh_free_ssh_key_pair(pairs[i]);
 	}
+	free(pairs);
 }
 
 void git_release_ssh_free_ssh_key_pair_array(git_release_ssh_key_pair_array* arr)
@@ -80,7 +81,6 @@ void git_release_ssh_free_ssh_key_pair_array(git_release_ssh_key_pair_array* arr
 		return;
 	}
 	git_release_ssh_free_ssh_key_pairs(arr->pairs, arr->count);
-	free(arr->pairs);
 	free(arr);
 }
 
