@@ -3,6 +3,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
 #include "ssh.h"
@@ -23,7 +24,7 @@ static int git_release_ssh_get_home_directory(char** out)
 		}
 		else
 		{
-			return E_SSHHOMENOTFOUND;
+			return 1;
 		}
 	}
 	
@@ -31,19 +32,33 @@ static int git_release_ssh_get_home_directory(char** out)
 	return 0;
 }
 
+static int git_release_ssh_is_folder(const char* folder)
+{
+	struct stat path_stat;
+	if(stat(folder, &path_stat) || !S_ISDIR(path_stat.st_mode))
+	{
+		return 1;
+	}
+	return 0;
+}
+
 int git_release_ssh_get_ssh_folder_from_current_user_home_directory(char** out)
 {
 	int out_len = 0;
-	int return_code = 0;
-	char* home_directory = NULL;
-	if((return_code = git_release_ssh_get_home_directory(&home_directory)))
+	char* home_directory = NULL; /* Don't bother to free this pointer because it will point to a protected memory segment which contains the home directory string*/
+	if(git_release_ssh_get_home_directory(&home_directory))
 	{
-		return return_code;
+		return E_SSHHOMENOTFOUND;
 	}
 	out_len = strlen(home_directory) + strlen("/.ssh") + sizeof(char);
 	*out = xmalloc(out_len);
 	snprintf(*out, out_len, "%s%s", home_directory, "/.ssh");
-	return return_code;
+
+	if(git_release_ssh_is_folder(*out))
+	{
+		return E_SSHFOLDERDOESNOTEXIST;
+	}
+	return 0;
 }
 
 void git_release_ssh_free_ssh_key_pairs(git_release_ssh_key_pair** pairs, int count)
@@ -80,24 +95,17 @@ void git_release_ssh_free_ssh_key_pair(git_release_ssh_key_pair* pair)
 	free(pair);
 }
 
-int git_release_ssh_list_file_in_home(char* ssh_directory, git_release_ssh_key_pair_array** out)
+int git_release_ssh_list_keys_in_folder(const char* ssh_directory, git_release_ssh_key_pair_array** out)
 {
 	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(git_release_ssh_key_pair_array));
 	DIR *dp = NULL;
 	struct dirent *ep = NULL;
-	int return_code = 0;
-	if(ssh_directory == NULL)
-	{
-		if((return_code = git_release_ssh_get_ssh_folder_from_current_user_home_directory(&ssh_directory)))
-		{
-			goto free_and_return;
-		}
-	}
+
 	dp = opendir(ssh_directory);
-	arr->count = 0;
-	arr->pairs = NULL;
 	if(dp != NULL)
 	{
+		arr->count = 0;
+		arr->pairs = NULL;
 		while((ep = readdir(dp)))
 		{
 			if(ep->d_type == DT_REG && git_release_string_utility_endswith(ep->d_name, ".pub"))
@@ -118,7 +126,10 @@ int git_release_ssh_list_file_in_home(char* ssh_directory, git_release_ssh_key_p
 		closedir(dp);
 		*out = arr;
 	}
-free_and_return:
-	free(ssh_directory);
-	return return_code;
+	else
+	{
+		git_release_ssh_free_ssh_key_pair_array(arr);
+		return E_SSHFOLDERDOESNOTEXIST;
+	}
+	return 0;
 }

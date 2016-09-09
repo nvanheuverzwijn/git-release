@@ -164,7 +164,11 @@ int main(int argc, char* argv[])
 	}
 
 	char* current_user_ssh_folder = NULL;
-	git_release_ssh_get_ssh_folder_from_current_user_home_directory(&current_user_ssh_folder);
+	if(git_release_ssh_get_ssh_folder_from_current_user_home_directory(&current_user_ssh_folder))
+	{
+		printf("Looks like the current home directory (~) or ssh folder (~/.ssh) does not exist");
+		goto free_and_return;
+	}
 	printf("Current user ssh folder: '%s'\n", current_user_ssh_folder);
 
 	git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
@@ -176,7 +180,7 @@ int main(int argc, char* argv[])
 	{
 		fetch_opts.callbacks.credentials = cred_acquire_from_ssh_key_cb;
 		git_release_ssh_key_pair_array* ssh_pairs = NULL;
-		git_release_ssh_list_file_in_home(current_user_ssh_folder, &ssh_pairs);
+		git_release_ssh_list_keys_in_folder(current_user_ssh_folder, &ssh_pairs);
 		if(ssh_pairs->count != 0)
 		{
 			fetch_opts.callbacks.payload = ssh_pairs->pairs[0];
@@ -200,7 +204,7 @@ int main(int argc, char* argv[])
 		printf("fetch success\n");
 	}
 	git_release_ssh_key_pair_array* ssh_pairs = NULL;
-	git_release_ssh_list_file_in_home(current_user_ssh_folder, &ssh_pairs);
+	git_release_ssh_list_keys_in_folder(current_user_ssh_folder, &ssh_pairs);
 	for(int i = 0; i < ssh_pairs->count; i++)
 	{
 		printf("%s\n", ssh_pairs->pairs[i]->private_key_path);
@@ -208,6 +212,7 @@ int main(int argc, char* argv[])
 	}
 	git_release_ssh_free_ssh_key_pair_array(ssh_pairs);
 
+free_and_return:
 	free(tag);
 	free(current_user_ssh_folder);
 
