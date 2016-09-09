@@ -31,7 +31,7 @@ static int git_release_ssh_get_home_directory(char** out)
 	return 0;
 }
 
-static int git_release_ssh_get_ssh_from_home_directory(char** out)
+int git_release_ssh_get_ssh_folder_from_current_user_home_directory(char** out)
 {
 	int out_len = 0;
 	int return_code = 0;
@@ -46,7 +46,7 @@ static int git_release_ssh_get_ssh_from_home_directory(char** out)
 	return return_code;
 }
 
-static void git_release_ssh_free_ssh_key_pairs(git_release_ssh_key_pair** pairs, int count)
+void git_release_ssh_free_ssh_key_pairs(git_release_ssh_key_pair** pairs, int count)
 {
 	if(pairs == NULL)
 	{
@@ -80,16 +80,18 @@ void git_release_ssh_free_ssh_key_pair(git_release_ssh_key_pair* pair)
 	free(pair);
 }
 
-int git_release_ssh_list_file_in_home(git_release_ssh_key_pair_array** out)
+int git_release_ssh_list_file_in_home(char* ssh_directory, git_release_ssh_key_pair_array** out)
 {
 	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(git_release_ssh_key_pair_array));
 	DIR *dp = NULL;
 	struct dirent *ep = NULL;
-	char* ssh_directory = NULL;
 	int return_code = 0;
-	if((return_code = git_release_ssh_get_ssh_from_home_directory(&ssh_directory)))
+	if(ssh_directory == NULL)
 	{
-		goto free_and_return;
+		if((return_code = git_release_ssh_get_ssh_folder_from_current_user_home_directory(&ssh_directory)))
+		{
+			goto free_and_return;
+		}
 	}
 	dp = opendir(ssh_directory);
 	arr->count = 0;
