@@ -4,6 +4,7 @@
 typedef struct git_release_ssh_key_pair {
 	char* public_key_path;
 	char* private_key_path;
+	char* type;
 } git_release_ssh_key_pair;
 
 typedef struct git_release_ssh_key_pair_array {

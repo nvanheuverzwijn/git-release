@@ -209,6 +209,7 @@ int main(int argc, char* argv[])
 	{
 		printf("%s\n", ssh_pairs->pairs[i]->private_key_path);
 		printf("%s\n", ssh_pairs->pairs[i]->public_key_path);
+		printf("%s\n", ssh_pairs->pairs[i]->type);
 	}
 	git_release_ssh_free_ssh_key_pair_array(ssh_pairs);
 

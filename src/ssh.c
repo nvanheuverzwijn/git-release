@@ -11,6 +11,22 @@
 #include "memory.h"
 #include "string_utility.h"
 
+static int git_release_ssh_public_key_type(char* public_key_path, char** out)
+{
+	FILE *file;
+	file = fopen(public_key_path, "r");
+	size_t len = 0;
+	ssize_t bytes_read = getdelim(out, &len, ' ', file);
+	if(bytes_read == -1)
+	{
+		fclose(file);
+		free(out);
+		return 1;
+	}
+	fclose(file);
+	return 0;
+}
+
 static int git_release_ssh_get_home_directory(char** out)
 {
 	char* home_directory = getenv("HOME");
@@ -114,11 +130,13 @@ int git_release_ssh_list_keys_in_folder(const char* ssh_directory, git_release_s
 
 				arr->pairs = xrealloc(arr->pairs, sizeof(arr->pairs) * (arr->count + 1));
 				arr->pairs[arr->count] = xmalloc(sizeof(git_release_ssh_key_pair));
+				/* finding public key */
 				arr->pairs[arr->count]->public_key_path = xmalloc(directory_len);
 				snprintf(arr->pairs[arr->count]->public_key_path, directory_len, "%s/%s", ssh_directory, ep->d_name);
-
-				/* remove `.pub` from public key to get the associated private key*/
+				/* finding private key */
 				git_release_string_utility_substr(arr->pairs[arr->count]->public_key_path, -4, &arr->pairs[arr->count]->private_key_path);
+				/* finding pairs type */
+				git_release_ssh_public_key_type(arr->pairs[arr->count]->public_key_path, &arr->pairs[arr->count]->type);
 
 				arr->count += 1;
 			}
