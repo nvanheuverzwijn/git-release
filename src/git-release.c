@@ -86,7 +86,7 @@ static int cred_acquire_from_ssh_key_cb(git_cred **out,
 		die("cred_acquire_from_ssh_key_cb requires a payload.");
 	}
 	git_release_ssh_key_pair* ssh_pair = (git_release_ssh_key_pair*)payload;
-	printf("Enter passphrase for key '%s' (empty if no passphrase):", ssh_pair->private_key_path);
+	printf("Enter passphrase for key '%s':", ssh_pair->private_key_path);
 	char* passphrase = getpass("");
 	if(strcmp(passphrase, "") == 0)
 	{
