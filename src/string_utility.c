@@ -4,7 +4,22 @@
 #include "string_utility.h"
 #include "memory.h"
 
-int git_release_string_utility_endswith(const char *string, const char *suffix)
+int git_release_string_utility_startswith(const char* string, const char* prefix)
+{
+	if(!string || !prefix)
+	{
+		return 0;
+	}
+	size_t stringlen = strlen(string);
+	size_t prefixlen = strlen(prefix);
+	if(prefixlen > stringlen)
+	{
+		return 1;
+	}
+	return strncmp(string, prefix, prefixlen);
+}
+
+int git_release_string_utility_endswith(const char* string, const char* suffix)
 {
 	if(!string || !suffix)
 	{
@@ -14,7 +29,7 @@ int git_release_string_utility_endswith(const char *string, const char *suffix)
 	size_t suffixlen = strlen(suffix);
 	if(suffixlen > stringlen)
 	{
-		return 0;
+		return 1;
 	}
 	return strncmp(string + stringlen - suffixlen, suffix, suffixlen) == 0;
 }
