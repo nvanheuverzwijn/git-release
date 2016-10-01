@@ -11,9 +11,10 @@ INCLUDES = -I./lib/libgit2/include/ -I./lib/libgit2/src/
 LDFLAGS = -L./lib/libgit2/build/
 LIBRARIES = -lgit2
 
+SRCDIR = src
+SOURCES := $(shell find $(SRCDIR) -name *.c)
 ODIR = src
-_OBJ = git-release.o tags.o memory.o semvers.o branch.o errors.o remote.o string_utility.o ssh.o
-OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+OBJ = $(SOURCES:%c=%o) 
 
 
 #
