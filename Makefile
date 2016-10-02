@@ -13,19 +13,20 @@ LIBRARIES = -lgit2
 
 SRCDIR = src
 SOURCES := $(shell find $(SRCDIR) -name *.c)
-ODIR = src
-OBJ = $(SOURCES:%c=%o) 
+BUILDDIR = build
+BINDIR = bin
+OBJ = $(SOURCES:${SRCDIR}/%.c=${BUILDDIR}/%.o)
 
 
 #
 # PHONY target below
 #
 
-all: bin/git-release
+all: ${BINDIR} ${BUILDDIR} bin/git-release
 
 clean: 
-	rm -f src/*.o
-	rm -f bin/*
+	rm -rf ${BUILDDIR}
+	rm -rf ${BINDIR}
 
 clean-lib:
 	rm -rf lib/libgit2/build
@@ -37,16 +38,21 @@ help:
 # Files below
 #
 
+${BINDIR}:
+	mkdir ${BINDIR}
+
+${BUILDDIR}:
+	mkdir ${BUILDDIR}
+
 lib/libgit2/build/:
 	git submodule update --init --recursive
 	mkdir -p lib/libgit2/build
 	cd lib/libgit2/build && cmake .. && cmake --build .
 
-%.o: %.c
+${BUILDDIR}/%.o: ${SRCDIR}/%.c
 	$(CC) -c $^ -o $@ $(CFLAGS) $(INCLUDES)
 
 bin/git-release: lib/libgit2/build/ $(OBJ) 
-	mkdir -p bin
 	$(CC) -o $@ $(OBJ) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBRARIES)
 	chmod +x bin/git-release
 	@echo
