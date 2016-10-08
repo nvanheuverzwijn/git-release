@@ -3,6 +3,6 @@
 
 int git_release_string_utility_startswith(const char* string, const char* prefix);
 int git_release_string_utility_endswith(const char* string, const char* suffix);
-int git_release_string_utility_substr(const char* source, int len, char** out);
+int git_release_string_utility_substr(char** out, const char* source, int len);
 
 #endif

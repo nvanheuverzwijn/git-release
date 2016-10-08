@@ -4,7 +4,7 @@
 #include "errors.h"
 #include "memory.h"
 
-int git_release_tag_get_last(git_repository *repo, char** out)
+int git_release_tag_get_last(char** out, git_repository *repo)
 {
 	char* last_tag = NULL;
 	git_strarray tags = {0};

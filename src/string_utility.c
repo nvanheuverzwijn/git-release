@@ -34,7 +34,7 @@ int git_release_string_utility_endswith(const char* string, const char* suffix)
 	return strncmp(string + stringlen - suffixlen, suffix, suffixlen) == 0;
 }
 
-int git_release_string_utility_substr(const char* source, int len, char** out)
+int git_release_string_utility_substr(char** out, const char* source, int len)
 {
 	size_t source_len = strlen(source);
 	if(source_len < abs(len))

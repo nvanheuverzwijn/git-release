@@ -115,42 +115,42 @@ int main(int argc, char* argv[])
 		die("Current directory not a git directory");
 	}
 
-	if(git_release_tag_get_last(repo, &tag))
+	if(git_release_tag_get_last(&tag, repo))
 	{
 		die("Could not get last tag");
 	}
 	printf("%s\n", tag);
 	int major;
-	if(git_release_semvers_get_major(tag, &major))
+	if(git_release_semvers_get_major(&major, tag))
 	{
 		die("Could not get major number of tag");
 	}
 	printf("%d\n", major);
 
 	int minor;
-	if(git_release_semvers_get_minor(tag, &minor))
+	if(git_release_semvers_get_minor(&minor, tag))
 	{
 		die("Could not get minor number of tag");
 	}
 	printf("%d\n", minor);
 
 	int patch;
-	if(git_release_semvers_get_patch(tag, &patch))
+	if(git_release_semvers_get_patch(&patch, tag))
 	{
 		die("Could not get patch number of tag");
 	}
 	printf("%d\n", patch);
 
 	char* new_tag = NULL;
-	git_release_semvers_increment_major(tag, &new_tag);
+	git_release_semvers_increment_major(&new_tag, tag);
 	printf("%s\n", new_tag);
 	free(new_tag);
 
-	git_release_semvers_increment_minor(tag, &new_tag);
+	git_release_semvers_increment_minor(&new_tag, tag);
 	printf("%s\n", new_tag);
 	free(new_tag);
 
-	git_release_semvers_increment_patch(tag, &new_tag);
+	git_release_semvers_increment_patch(&new_tag, tag);
 	printf("%s\n", new_tag);
 	free(new_tag);
 
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 	{
 		fetch_opts.callbacks.credentials = cred_acquire_from_ssh_key_cb;
 		git_release_ssh_key_pair_array* ssh_pairs = NULL;
-		git_release_ssh_list_keys_in_folder(current_user_ssh_folder, &ssh_pairs);
+		git_release_ssh_list_keys_in_folder(&ssh_pairs, current_user_ssh_folder);
 		if(ssh_pairs->count != 0)
 		{
 			fetch_opts.callbacks.payload = ssh_pairs->pairs[0];
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
 		printf("fetch success\n");
 	}
 	git_release_ssh_key_pair_array* ssh_pairs = NULL;
-	git_release_ssh_list_keys_in_folder(current_user_ssh_folder, &ssh_pairs);
+	git_release_ssh_list_keys_in_folder(&ssh_pairs, current_user_ssh_folder);
 	for(int i = 0; i < ssh_pairs->count; i++)
 	{
 		printf("%s\n", ssh_pairs->pairs[i]->private_key_path);

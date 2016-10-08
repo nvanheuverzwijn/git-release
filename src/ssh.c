@@ -11,7 +11,7 @@
 #include "memory.h"
 #include "string_utility.h"
 
-static int git_release_ssh_public_key_type(char* public_key_path, char** out)
+static int git_release_ssh_public_key_type(char** out, char* public_key_path)
 {
 	FILE *file;
 	file = fopen(public_key_path, "r");
@@ -111,7 +111,7 @@ void git_release_ssh_free_ssh_key_pair(git_release_ssh_key_pair* pair)
 	free(pair);
 }
 
-int git_release_ssh_list_keys_in_folder(const char* ssh_directory, git_release_ssh_key_pair_array** out)
+int git_release_ssh_list_keys_in_folder(git_release_ssh_key_pair_array** out, const char* ssh_directory)
 {
 	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(git_release_ssh_key_pair_array));
 	DIR *dp = NULL;
@@ -134,9 +134,9 @@ int git_release_ssh_list_keys_in_folder(const char* ssh_directory, git_release_s
 				arr->pairs[arr->count]->public_key_path = xmalloc(directory_len);
 				snprintf(arr->pairs[arr->count]->public_key_path, directory_len, "%s/%s", ssh_directory, ep->d_name);
 				/* finding private key */
-				git_release_string_utility_substr(arr->pairs[arr->count]->public_key_path, -4, &arr->pairs[arr->count]->private_key_path);
+				git_release_string_utility_substr(&arr->pairs[arr->count]->private_key_path, arr->pairs[arr->count]->public_key_path, -4);
 				/* finding pairs type */
-				git_release_ssh_public_key_type(arr->pairs[arr->count]->public_key_path, &arr->pairs[arr->count]->type);
+				git_release_ssh_public_key_type(&arr->pairs[arr->count]->type, arr->pairs[arr->count]->public_key_path);
 
 				arr->count += 1;
 			}

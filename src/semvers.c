@@ -25,7 +25,7 @@ static int git_release_semvers_get_semvers_regex(regex_t** out)
 	*out = git_release_semvers_regex;
 	return 0;
 }
-static int git_release_semvers_regex_match(const char* value, regmatch_t** out)
+static int git_release_semvers_regex_match(regmatch_t** out, const char* value)
 {
 	regex_t* regex = NULL;
 	git_release_semvers_get_semvers_regex(&regex);
@@ -43,7 +43,7 @@ static int git_release_semvers_regex_match(const char* value, regmatch_t** out)
 	*out = pmatch;
 	return 0;
 }
-static int git_release_semvers_extract_int_from_pmatch(const char* value, const regmatch_t* pmatch, int* out)
+static int git_release_semvers_extract_int_from_pmatch(int* out, const char* value, const regmatch_t* pmatch)
 {
 	char *str = NULL;
 	int start = pmatch->rm_so;
@@ -58,44 +58,44 @@ static int git_release_semvers_extract_int_from_pmatch(const char* value, const 
 	
 	return 0;
 }
-static int git_release_semvers_get_version_number(const char* tag, int version_label, int* out)
+static int git_release_semvers_get_version_number(int* out, const char* tag, int version_label)
 {
 	int err;
 	regmatch_t* pmatch = NULL;
-	if((err = git_release_semvers_regex_match(tag, &pmatch)))
+	if((err = git_release_semvers_regex_match(&pmatch, tag)))
 	{
 		return err;
 	}
 	if(version_label == MAJOR)
 	{
-		git_release_semvers_extract_int_from_pmatch(tag, &pmatch[major_position], out);
+		git_release_semvers_extract_int_from_pmatch(out, tag, &pmatch[major_position]);
 	}
 	else if(version_label == MINOR)
 	{
-		git_release_semvers_extract_int_from_pmatch(tag, &pmatch[minor_position], out);
+		git_release_semvers_extract_int_from_pmatch(out, tag, &pmatch[minor_position]);
 	}
 	if(version_label == PATCH)
 	{
-		git_release_semvers_extract_int_from_pmatch(tag, &pmatch[patch_position], out);
+		git_release_semvers_extract_int_from_pmatch(out, tag, &pmatch[patch_position]);
 	}
 	free(pmatch);	
 	return 0;
 }
-static int git_release_semvers_increment_version_number(const char* tag, int version_label, char** out)
+static int git_release_semvers_increment_version_number(char** out, const char* tag, int version_label)
 {
 	int err;
 	int major;
 	int minor;
 	int patch;
-	if((err = git_release_semvers_get_major(tag, &major)))
+	if((err = git_release_semvers_get_major(&major, tag)))
 	{
 		return err;
 	}
-	if((err = git_release_semvers_get_minor(tag, &minor)))
+	if((err = git_release_semvers_get_minor(&minor, tag)))
 	{
 		return err;
 	}
-	if((err = git_release_semvers_get_patch(tag, &patch)))
+	if((err = git_release_semvers_get_patch(&patch, tag)))
 	{
 		return err;
 	}
@@ -128,27 +128,27 @@ static int git_release_semvers_increment_version_number(const char* tag, int ver
 // Header function below
 //
 
-int git_release_semvers_get_major(const char* tag, int* out)
+int git_release_semvers_get_major(int* out, const char* tag)
 {
-	return git_release_semvers_get_version_number(tag, MAJOR, out);
+	return git_release_semvers_get_version_number(out, tag, MAJOR);
 }
-int git_release_semvers_get_minor(const char* tag, int* out)
+int git_release_semvers_get_minor(int* out, const char* tag)
 {
-	return git_release_semvers_get_version_number(tag, MINOR, out);
+	return git_release_semvers_get_version_number(out, tag, MINOR);
 }
-int git_release_semvers_get_patch(const char* tag, int* patch)
+int git_release_semvers_get_patch(int* out, const char* tag)
 {
-	return git_release_semvers_get_version_number(tag, PATCH, patch);
+	return git_release_semvers_get_version_number(out, tag, PATCH);
 }
-int git_release_semvers_increment_major(const char* tag, char** out)
+int git_release_semvers_increment_major(char** out, const char* tag)
 {
-	return git_release_semvers_increment_version_number(tag, MAJOR, out);
+	return git_release_semvers_increment_version_number(out, tag, MAJOR);
 }
-int git_release_semvers_increment_minor(const char* tag, char** out)
+int git_release_semvers_increment_minor(char** out, const char* tag)
 {
-	return git_release_semvers_increment_version_number(tag, MINOR, out);
+	return git_release_semvers_increment_version_number(out, tag, MINOR);
 }
-int git_release_semvers_increment_patch(const char* tag, char** out)
+int git_release_semvers_increment_patch(char** out, const char* tag)
 {
-	return git_release_semvers_increment_version_number(tag, PATCH, out);
+	return git_release_semvers_increment_version_number(out, tag, PATCH);
 }
