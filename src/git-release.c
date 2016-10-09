@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <git2.h>
+#include "string_utility.h"
 #include "errors.h"
 #include "tags.h"
 #include "semvers.h"
@@ -19,6 +20,13 @@
 #else
 # define UNUSED(x) x
 #endif
+
+
+/*
+libgit2 general api error
+const git_error *e = giterr_last();
+printf("Error %d: %s\n", e->klass, e->message);
+*/
 
 
 static int progress_cb(const char *str, int len, void *data)
@@ -85,13 +93,35 @@ static int cred_acquire_from_ssh_key_cb(git_cred **out,
 	{
 		die("cred_acquire_from_ssh_key_cb requires a payload.");
 	}
-	git_release_ssh_key_pair* ssh_pair = (git_release_ssh_key_pair*)payload;
-	printf("Enter passphrase for key '%s':", ssh_pair->private_key_path);
-	char* passphrase = getpass("");
-	if(strcmp(passphrase, "") == 0)
+
+	git_release_ssh_key_pair_array* ssh_key_pair_array = (git_release_ssh_key_pair_array*)payload;
+	git_release_ssh_key_pair* ssh_pair = NULL;
+	if(git_release_ssh_key_pair_array_current(&ssh_pair, ssh_key_pair_array))
 	{
-		passphrase = NULL;
+		printf("No more ssh keys to try.\n");
+		return GIT_ERROR;
 	}
+	while(git_release_string_utility_startswith(ssh_pair->type, "ecdsa") == 0)
+	{
+		printf("Skipping '%s' because ssh key type ecdsa is not supported.\n", ssh_pair->private_key_path);
+		if(git_release_ssh_key_pair_array_next(&ssh_pair, ssh_key_pair_array))
+		{
+			printf("No more ssh keys to try.\n");
+			return GIT_ERROR;
+		}
+	}
+
+	char* passphrase = NULL;
+	if(ssh_pair->encrypted)
+	{
+		printf("Enter passphrase for key '%s':", ssh_pair->private_key_path);
+		passphrase = getpass("");
+		if(strcmp(passphrase, "") == 0)
+		{
+			passphrase = NULL;
+		}
+	}
+	git_release_ssh_key_pair_array_next(NULL, ssh_key_pair_array);
 	return git_cred_ssh_key_new(
 		out,
 		username_from_url,
@@ -178,12 +208,13 @@ int main(int argc, char* argv[])
 	fetch_opts.callbacks.credentials = cred_acquire_from_ssh_agent_cb;
 	if(git_release_remote_fetch(repo, "origin", &fetch_opts))
 	{
+		printf("Looks like ssh-agent is not running. Trying keys from '%s' folder.\n", current_user_ssh_folder);
 		fetch_opts.callbacks.credentials = cred_acquire_from_ssh_key_cb;
 		git_release_ssh_key_pair_array* ssh_pairs = NULL;
 		git_release_ssh_list_keys_in_folder(&ssh_pairs, current_user_ssh_folder);
 		if(ssh_pairs->count != 0)
 		{
-			fetch_opts.callbacks.payload = ssh_pairs->pairs[0];
+			fetch_opts.callbacks.payload = ssh_pairs;
 			if(git_release_remote_fetch(repo, "origin", &fetch_opts))
 			{
 				printf("Could not authenticate against the server. Make sure ssh-agent is running with your key\n");
@@ -211,6 +242,8 @@ int main(int argc, char* argv[])
 		printf("%s\n", ssh_pairs->pairs[i]->public_key_path);
 		printf("%s\n", ssh_pairs->pairs[i]->type);
 	}
+
+
 	git_release_ssh_free_ssh_key_pair_array(ssh_pairs);
 
 free_and_return:
