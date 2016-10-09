@@ -27,6 +27,31 @@ static int git_release_ssh_public_key_type(char** out, char* public_key_path)
 	return 0;
 }
 
+static int git_release_ssh_private_key_is_encrypted(int* out, char* private_key_path)
+{
+	*out = 0;
+	char* line;
+	FILE *file;
+	file = fopen(private_key_path, "r");
+	size_t len = 0;
+	for(int i = 0; i < 2; i++) /* read second line */
+	{
+		ssize_t bytes_read = getdelim(&line, &len, '\n', file);
+		if(bytes_read == -1) 
+		{   
+			fclose(file);
+			free(out);
+			return 1;
+		}
+	}
+	if(git_release_string_utility_startswith(line, "Proc-Type: 4,ENCRYPTED") == 0)
+	{
+		*out = 1;
+	}
+	fclose(file);
+	return 0;
+}
+
 static int git_release_ssh_get_home_directory(char** out)
 {
 	char* home_directory = getenv("HOME");
@@ -111,6 +136,30 @@ void git_release_ssh_free_ssh_key_pair(git_release_ssh_key_pair* pair)
 	free(pair);
 }
 
+int git_release_ssh_key_pair_array_current(git_release_ssh_key_pair** out, git_release_ssh_key_pair_array* ssh_key_pair_array)
+{
+	if(ssh_key_pair_array->count == 0)
+	{
+		return 1;
+	}
+	*out = ssh_key_pair_array->pairs[ssh_key_pair_array->current];
+	return 0;
+}
+
+int git_release_ssh_key_pair_array_next(git_release_ssh_key_pair** out, git_release_ssh_key_pair_array* ssh_key_pair_array)
+{
+	if(ssh_key_pair_array->count > ssh_key_pair_array->current)
+	{
+		ssh_key_pair_array->current++;
+		if(out)
+		{
+			*out = ssh_key_pair_array->pairs[ssh_key_pair_array->current];
+		}
+		return 0;
+	}
+	return 1;
+}
+
 int git_release_ssh_list_keys_in_folder(git_release_ssh_key_pair_array** out, const char* ssh_directory)
 {
 	git_release_ssh_key_pair_array* arr = xmalloc(sizeof(git_release_ssh_key_pair_array));
@@ -121,6 +170,7 @@ int git_release_ssh_list_keys_in_folder(git_release_ssh_key_pair_array** out, co
 	if(dp != NULL)
 	{
 		arr->count = 0;
+		arr->current = 0;
 		arr->pairs = NULL;
 		while((ep = readdir(dp)))
 		{
@@ -137,6 +187,8 @@ int git_release_ssh_list_keys_in_folder(git_release_ssh_key_pair_array** out, co
 				git_release_string_utility_substr(&arr->pairs[arr->count]->private_key_path, arr->pairs[arr->count]->public_key_path, -4);
 				/* finding pairs type */
 				git_release_ssh_public_key_type(&arr->pairs[arr->count]->type, arr->pairs[arr->count]->public_key_path);
+				/* finding if private key is encrypted */
+				git_release_ssh_private_key_is_encrypted(&arr->pairs[arr->count]->encrypted, arr->pairs[arr->count]->private_key_path);
 
 				arr->count += 1;
 			}
