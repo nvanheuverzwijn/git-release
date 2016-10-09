@@ -4,6 +4,9 @@
 #include "string_utility.h"
 #include "memory.h"
 
+/**
+ * Returns 0 if string start with prefix
+ */
 int git_release_string_utility_startswith(const char* string, const char* prefix)
 {
 	if(!string || !prefix)
